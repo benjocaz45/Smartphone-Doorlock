@@ -35,9 +35,12 @@ var lockedState = 2200;
 
 var motorPin = 14;
 var buttonPin = 4
-var ledPin = 17
+var OLledPin = 17 //Outside Locked (red) led indicator
+var OUledPin = 27 //Outside UNLocked (green) led indicator
+var ILledPin = 23 //Inside Locked (red) led indicator
+var IUledPin = 18 //Inside UNLocked (green) led indicator
 
-var blynkToken = 'blynk_token_here';
+var blynkToken = 'blynk-auth-token';
 
 // *** Start code *** //
 
@@ -51,8 +54,10 @@ var Gpio = require('pigpio').Gpio,
     pullUpDown: Gpio.PUD_DOWN,
     edge: Gpio.FALLING_EDGE
   }),
-  led = new Gpio(ledPin, {mode: Gpio.OUTPUT});
-
+  OLled = new Gpio(OLledPin, {mode: Gpio.OUTPUT});
+  OUled = new Gpio(OUledPin, {mode: Gpio.OUTPUT});
+  ILled = new Gpio(ILledPin, {mode: Gpio.OUTPUT});
+  IUled = new Gpio(IUledPin, {mode: Gpio.OUTPUT});
 //Setup blynk
 var Blynk = require('blynk-library');
 var blynk = new Blynk.Blynk(blynkToken);
@@ -88,7 +93,11 @@ blynk.on('disconnect', function() { console.log("DISCONNECT"); });
 
 function lockDoor() {
 	motor.servoWrite(lockedState);
-	led.digitalWrite(1);
+	OLled.digitalWrite(1); //Sets outside lock indicator (red) high
+	OUled.digitalWrite(0); //Sets outside unlock indicator (green) low
+	ILled.digitalWrite(1); //Sets inside lock indicator (red) high
+	IUled.digitalWrite(0); //Sets inside unlock indicator (green) low
+	setTimeout(function(){ILled.digitalWrite(0)}, 2000); //Waits 2 seconds, then sets inside lock indicator (red) low
 	locked = true
 
 	//notify
@@ -100,7 +109,11 @@ function lockDoor() {
 
 function unlockDoor() {
 	motor.servoWrite(unlockedState);
-	led.digitalWrite(0);
+	OLled.digitalWrite(0);
+	OUled.digitalWrite(1);
+	ILled.digitalWrite(0);
+	IUled.digitalWrite(1);
+	setTimeout(function(){IUled.digitalWrite(0)});
 	locked = false
 
 	//notify
